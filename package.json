@@ -1,0 +1,19 @@
+{
+  "name": "demandable-web-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo for Demandable Web (DW) decentralised marketplace",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build:web": "npm run build --workspace=apps/web",
+    "test:contracts": "npm run test --workspace=apps/smart-contracts",
+    "compile:contracts": "npm run compile --workspace=apps/smart-contracts"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

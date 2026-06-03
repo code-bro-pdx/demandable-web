@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demandable Web (DW) — Decentralized Home Services Ecosystem</title>
+  <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="logo-section">
+      <div class="logo-icon">DW</div>
+      <h1 class="logo-text">Demandable Web Portal</h1>
+    </div>
+    <button id="walletBtn" class="wallet-btn">
+      <span class="status-dot"></span>
+      <span id="walletText">Connect Coinbase Smart Wallet</span>
+    </button>
+  </header>
+
+  <!-- Notification Banner -->
+  <div class="dashboard-container">
+    <div id="toast" class="toast-msg" style="display: none;">
+      <span id="toastIcon">ℹ</span>
+      <span id="toastText">Wallet initialized in self-custodial mode.</span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation">
+      <button class="nav-tab active" data-tab="homeowner">Homeowner Portal</button>
+      <button class="nav-tab" data-tab="contractor">Contractor Dashboard</button>
+      <button class="nav-tab" data-tab="inspector">Inspector & Dispute Board</button>
+    </nav>
+
+    <!-- Main Views -->
+    <main>
+      
+      <!-- Homeowner Portal View -->
+      <section id="tab-homeowner" class="tab-view active">
+        <div class="grid-layout">
+          
+          <!-- Column 1: AI Matcher & Search -->
+          <div class="glass-container">
+            <div class="card-header">
+              <span>Smart AI matching & Static Directory</span>
+              <span style="font-size: 0.8rem; color: var(--accent-cyan);">Strictly Factual Listings</span>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>What service do you need? (AI Search Query)</label>
+                <textarea id="searchQuery" class="form-textarea" rows="3" placeholder="Describe the job details, issues, specifications, or tutoring subjects..."></textarea>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                  <label>Category</label>
+                  <select id="searchCategory" class="form-select">
+                    <option value="Roofing">Roofing</option>
+                    <option value="Housekeeping">Housekeeping</option>
+                    <option value="Tutoring">Tutoring</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Search Radius (Miles)</label>
+                  <input type="number" id="searchRadius" class="form-input" value="25">
+                </div>
+              </div>
+              <button id="matchBtn" class="btn-primary">
+                <span>🔍</span> AI Match Contractors
+              </button>
+
+              <hr style="border: 1px solid var(--card-border); margin: 1.5rem 0;">
+
+              <div id="contractorListSection">
+                <h3 style="font-family: var(--font-heading); font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">Matching Providers (No Highlight/Ads Policy)</h3>
+                <div id="contractorsList" class="listing-wrapper">
+                  <div class="text-muted" style="text-align: center; font-size: 0.85rem; padding: 1rem 0;">Run AI Match to populate listings from the decentralized registry.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: Escrow Smart Contract & Milestones -->
+          <div class="glass-container">
+            <div class="card-header">
+              <span>Smart Contract Escrow Generation</span>
+              <span id="selectedContractorBadge" style="font-size: 0.75rem; background: rgba(255,255,255,0.05); padding: 0.3rem 0.6rem; border-radius: 4px; display: none;">No contractor selected</span>
+            </div>
+            <div class="card-body" id="escrowCreationSection" style="opacity: 0.5; pointer-events: none;">
+              <div class="form-group">
+                <label>Submit Contractor Bid/Estimate (Text File or Unstructured Chat)</label>
+                <textarea id="bidText" class="form-textarea" rows="4" placeholder="Paste the contractor's raw estimate text here. The AI Agent will distill it into binding smart contract milestones..."></textarea>
+              </div>
+              <button id="analyzeBidBtn" class="btn-primary" style="background: var(--accent-purple);">
+                <span>⚙</span> Deconstruct Estimate via AI
+              </button>
+
+              <div id="parsedContractDetails" style="display: none; margin-top: 1.5rem;">
+                <h3 style="font-family: var(--font-heading); font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">Factual Contract Milestones</h3>
+                <div class="contract-breakdown">
+                  <div id="milestonesContainer">
+                    <!-- Dynamic Milestones -->
+                  </div>
+                  <div class="total-contract-cost">
+                    <span>Total Cost:</span>
+                    <span id="totalEscrowCost">$0 DWS</span>
+                  </div>
+                </div>
+                <button id="fundEscrowBtn" class="btn-primary" style="margin-top: 1rem; background: linear-gradient(135deg, var(--accent-mint), var(--accent-cyan)); color: #07090e;">
+                  <span>💳</span> Fund Escrow & Deploy Smart Contract
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Contractor Dashboard View -->
+      <section id="tab-contractor" class="tab-view">
+        <div class="glass-container" style="max-width: 800px; margin: 0 auto;">
+          <div class="card-header">
+            <span>Contractor Active Jobs</span>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);" id="contractorWalletDisplay">Not Connected</span>
+          </div>
+          <div class="card-body">
+            <div id="contractorJobsList" class="listing-wrapper">
+              <div class="text-muted" style="text-align: center; padding: 20px;">No active escrows registered under this wallet. Create a job first.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Inspector Board View -->
+      <section id="tab-inspector" class="tab-view">
+        <div class="grid-layout">
+          
+          <!-- Inspector Staking and Active Assignments -->
+          <div class="glass-container">
+            <div class="card-header">
+              <span>Peer Inspector Staking & Duties</span>
+              <button id="registerInspectorBtn" class="select-pro-btn" style="display: none;">Register as Inspector</button>
+            </div>
+            <div class="card-body">
+              <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Your Staked Balance</div>
+                  <div style="font-size: 1.5rem; font-family: var(--font-heading); font-weight: 700; color: var(--accent-cyan);" id="stakedDWG">0.0 DWG</div>
+                </div>
+                <button id="stakeDWGBtn" class="wallet-btn" style="border-color: var(--accent-purple);">Stake 500 $DWG</button>
+              </div>
+
+              <h3 style="font-family: var(--font-heading); font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">Milestone Inspections Assigned To You</h3>
+              <div id="inspectorJobsList" class="listing-wrapper">
+                <div class="text-muted" style="text-align: center; padding: 10px; font-size: 0.85rem;">No active milestone inspections assigned to your address.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dispute Resolution Voting Panel -->
+          <div class="glass-container">
+            <div class="card-header">
+              <span>Decentralized Dispute Jury (Schelling Point)</span>
+              <span style="font-size: 0.75rem; background: rgba(255,51,102,0.1); color: var(--accent-red); padding: 0.3rem 0.6rem; border-radius: 4px;">Jury Staking Active</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.4;">
+                Stake your `$DWG` to vote on disputes. Voting correctly (coherently with majority) distributes a share of the loser's arbitration fee. Voting incorrectly slashes 10% of your voting stake.
+              </p>
+              <h3 style="font-family: var(--font-heading); font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">Active Disputes</h3>
+              <div id="disputesList" class="listing-wrapper">
+                <div class="text-muted" style="text-align: center; padding: 10px; font-size: 0.85rem;">No active contractor disputes in the network.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
