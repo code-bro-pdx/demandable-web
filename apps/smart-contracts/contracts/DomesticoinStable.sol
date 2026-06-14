@@ -5,13 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title DWSToken
- * @dev Mock stablecoin ($DWS) representing USD-pegged utility in the Demandable Web ecosystem.
+ * @title DomesticoinStable
+ * @dev Mock stablecoin ($DMCS) representing USD-pegged utility in the Demandable Web ecosystem.
  * Used for escrows, bidding, and flat-rate juror arbitration fees.
  */
-contract DWSToken is ERC20, Ownable {
-    constructor(address initialOwner) ERC20("Demandable Web Stable", "DWS") Ownable(initialOwner) {
-        // Mint 100,000,000 DWS to the owner for initial test funding and distribution
+contract DomesticoinStable is ERC20, Ownable {
+    constructor(address initialOwner) ERC20("Domesticoin Stable", "DMCS") Ownable(initialOwner) {
+        // Mint 100,000,000 DMCS to the owner for initial test funding and distribution
         _mint(initialOwner, 100000000 * 10 ** decimals());
     }
 

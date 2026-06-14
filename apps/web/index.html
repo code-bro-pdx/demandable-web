@@ -14,10 +14,15 @@
       <div class="logo-icon">DW</div>
       <h1 class="logo-text">Demandable Web Portal</h1>
     </div>
-    <button id="walletBtn" class="wallet-btn">
-      <span class="status-dot"></span>
-      <span id="walletText">Connect Coinbase Smart Wallet</span>
-    </button>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <button id="changeUXBtn" class="wallet-btn" style="border-color: var(--accent-purple); font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+        ⚙️ UX: <span id="currentUXDisplay">Traditional</span>
+      </button>
+      <button id="walletBtn" class="wallet-btn">
+        <span class="status-dot"></span>
+        <span id="walletText" data-ux-term="wallet-connect">Connect Coinbase Smart Wallet</span>
+      </button>
+    </div>
   </header>
 
   <!-- Notification Banner -->
@@ -84,7 +89,7 @@
           <!-- Column 2: Escrow Smart Contract & Milestones -->
           <div class="glass-container">
             <div class="card-header">
-              <span>Smart Contract Escrow Generation</span>
+              <span data-ux-term="escrow-header">Smart Contract Escrow Generation</span>
               <span id="selectedContractorBadge" style="font-size: 0.75rem; background: rgba(255,255,255,0.05); padding: 0.3rem 0.6rem; border-radius: 4px; display: none;">No contractor selected</span>
             </div>
             <div class="card-body" id="escrowCreationSection" style="opacity: 0.5; pointer-events: none;">
@@ -103,12 +108,12 @@
                     <!-- Dynamic Milestones -->
                   </div>
                   <div class="total-contract-cost">
-                    <span>Total Cost:</span>
-                    <span id="totalEscrowCost">$0 DWS</span>
+                    <span data-ux-term="total-cost-label">Total Cost:</span>
+                    <span id="totalEscrowCost">$0 DMCS</span>
                   </div>
                 </div>
                 <button id="fundEscrowBtn" class="btn-primary" style="margin-top: 1rem; background: linear-gradient(135deg, var(--accent-mint), var(--accent-cyan)); color: #07090e;">
-                  <span>💳</span> Fund Escrow & Deploy Smart Contract
+                  <span>💳</span> <span data-ux-term="fund-btn-text">Fund Escrow & Deploy Smart Contract</span>
                 </button>
               </div>
             </div>
@@ -139,16 +144,16 @@
           <!-- Inspector Staking and Active Assignments -->
           <div class="glass-container">
             <div class="card-header">
-              <span>Peer Inspector Staking & Duties</span>
-              <button id="registerInspectorBtn" class="select-pro-btn" style="display: none;">Register as Inspector</button>
+              <span data-ux-term="inspector-staking-header">Peer Inspector Staking & Duties</span>
+              <button id="registerInspectorBtn" class="select-pro-btn" style="display: none;" data-ux-term="register-inspector-btn">Register as Inspector</button>
             </div>
             <div class="card-body">
               <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Your Staked Balance</div>
-                  <div style="font-size: 1.5rem; font-family: var(--font-heading); font-weight: 700; color: var(--accent-cyan);" id="stakedDWG">0.0 DWG</div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary);" data-ux-term="staked-label">Your Staked Balance</div>
+                  <div style="font-size: 1.5rem; font-family: var(--font-heading); font-weight: 700; color: var(--accent-cyan);" id="stakedDMCU">0.0 DMCU</div>
                 </div>
-                <button id="stakeDWGBtn" class="wallet-btn" style="border-color: var(--accent-purple);">Stake 500 $DWG</button>
+                <button id="stakeDWGBtn" class="wallet-btn" style="border-color: var(--accent-purple);" data-ux-term="stake-btn">Stake 500 $DMCU</button>
               </div>
 
               <h3 style="font-family: var(--font-heading); font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">Milestone Inspections Assigned To You</h3>
@@ -161,12 +166,12 @@
           <!-- Dispute Resolution Voting Panel -->
           <div class="glass-container">
             <div class="card-header">
-              <span>Decentralized Dispute Jury (Schelling Point)</span>
+              <span data-ux-term="dispute-header">Decentralized Dispute Jury (Schelling Point)</span>
               <span style="font-size: 0.75rem; background: rgba(255,51,102,0.1); color: var(--accent-red); padding: 0.3rem 0.6rem; border-radius: 4px;">Jury Staking Active</span>
             </div>
             <div class="card-body">
-              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.4;">
-                Stake your `$DWG` to vote on disputes. Voting correctly (coherently with majority) distributes a share of the loser's arbitration fee. Voting incorrectly slashes 10% of your voting stake.
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.4;" data-ux-term="dispute-desc">
+                Stake your `$DMCU` to vote on disputes. Voting correctly (coherently with majority) distributes a share of the loser's arbitration fee. Voting incorrectly slashes 10% of your voting stake.
               </p>
               <h3 style="font-family: var(--font-heading); font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">Active Disputes</h3>
               <div id="disputesList" class="listing-wrapper">
@@ -180,6 +185,56 @@
 
     </main>
   </div>
+
+  <!-- Onboarding Modal Dialog -->
+  <dialog id="onboardingModal" class="onboarding-dialog" closedby="any" aria-labelledby="onboardingTitle">
+    <div class="onboarding-container">
+      <h2 id="onboardingTitle" class="onboarding-title">Welcome to Domesticoin</h2>
+      <p class="onboarding-subtitle">Select your experience level to customize the interface terminology and complexity.</p>
+      
+      <div class="onboarding-options">
+        <!-- Option 1: Traditional -->
+        <div class="onboarding-card" data-level="traditional">
+          <div class="onboarding-card-icon">🏠</div>
+          <h3>Traditional (Web2)</h3>
+          <p>Ideal if you prefer simple, familiar terminology. No blockchain jargon like "Smart Contracts", "Wallets", or gas fees.</p>
+          <ul class="option-highlights">
+            <li>Secure Account</li>
+            <li>Digital Dollars / USD</li>
+            <li>Standard Agreement</li>
+          </ul>
+        </div>
+        
+        <!-- Option 2: Hybrid -->
+        <div class="onboarding-card" data-level="hybrid">
+          <div class="onboarding-card-icon">🧠</div>
+          <h3>Hybrid (Curious Learner)</h3>
+          <p>Introduces Web3 concepts alongside Web2 translations, with explanatory tooltips to help you learn along the way.</p>
+          <ul class="option-highlights">
+            <li>Secure Wallet (Base Blockchain)</li>
+            <li>Escrow Deposit ($DMCS Stable)</li>
+            <li>Explanatory Tooltips</li>
+          </ul>
+        </div>
+        
+        <!-- Option 3: Web3 Native -->
+        <div class="onboarding-card" data-level="native">
+          <div class="onboarding-card-icon">⚡</div>
+          <h3>Web3 Native (Advanced)</h3>
+          <p>Full blockchain exposure. Unfiltered cryptographic addresses, raw stable/utility tokens ($DMCS, $DMCU), tx hashes, and staking.</p>
+          <ul class="option-highlights">
+            <li>$DMCS and $DMCU tokens</li>
+            <li>Contract Addresses & Hashes</li>
+            <li>Schelling Point & Slashing</li>
+          </ul>
+        </div>
+      </div>
+      
+      <button id="startAppBtn" class="btn-primary" style="margin-top: 2rem; max-width: 320px;" disabled>
+        Please Select an Option
+      </button>
+    </div>
+  </dialog>
 
   <script type="module" src="./main.js"></script>
 </body>

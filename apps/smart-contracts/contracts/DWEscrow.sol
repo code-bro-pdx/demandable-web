@@ -3,24 +3,24 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./DWGToken.sol";
+import "./DomesticoinUtility.sol";
 import "./DWRegistry.sol";
 
 /**
  * @title DWEscrow
  * @dev Escrow and dispute settlement system for the Demandable Web ecosystem.
  * Handles job payments, randomized peer oversight assignment, verification reward minting,
- * and dispute resolution.
+ * and dispute resolution using Domesticoin Utility ($DMCU) and Domesticoin Stable ($DMCS).
  */
 contract DWEscrow is Ownable {
-    DWGToken public dwgToken;
-    IERC20 public dwsToken;
+    DomesticoinUtility public dmcuToken;
+    IERC20 public dmcsToken;
     DWRegistry public registry;
 
-    uint256 public constant JURY_VOTE_LOCK = 250 * 10**18; // $DWG locked for jury duty
-    uint256 public constant INSPECTOR_LOCK = 100 * 10**18; // $DWG locked for milestone inspection
-    uint256 public constant ARBITRATION_FEE_USD = 20 * 10**18; // $20 DWS flat arbitration fee per juror
-    uint256 public constant INSPECTION_REWARD_DWG = 50 * 10**18; // $DWG rewards for inspection
+    uint256 public constant JURY_VOTE_LOCK = 250 * 10**18; // $DMCU locked for jury duty
+    uint256 public constant INSPECTOR_LOCK = 100 * 10**18; // $DMCU locked for milestone inspection
+    uint256 public constant ARBITRATION_FEE_USD = 20 * 10**18; // $20 DMCS flat arbitration fee per juror
+    uint256 public constant INSPECTION_REWARD_DMCU = 50 * 10**18; // $DMCU rewards for inspection
 
     enum JobStatus { Active, Completed, Disputed, Resolved }
     enum MilestoneStatus { Pending, Requested, Approved, Rejected }
@@ -72,13 +72,13 @@ contract DWEscrow is Ownable {
     event DisputeResolved(uint256 indexed jobId, address winner);
 
     constructor(
-        address _dwgToken,
-        address _dwsToken,
+        address _dmcuToken,
+        address _dmcsToken,
         address _registry,
         address initialOwner
     ) Ownable(initialOwner) {
-        dwgToken = DWGToken(_dwgToken);
-        dwsToken = IERC20(_dwsToken);
+        dmcuToken = DomesticoinUtility(_dmcuToken);
+        dmcsToken = IERC20(_dmcsToken);
         registry = DWRegistry(_registry);
     }
 
@@ -87,14 +87,14 @@ contract DWEscrow is Ownable {
      */
     function registerAsInspector() external {
         require(!isInspectorRegistered[msg.sender], "DWEscrow: already registered");
-        require(dwgToken.stakedBalanceOf(msg.sender) >= 500 * 10**18, "DWEscrow: must stake at least 500 DWG");
+        require(dmcuToken.stakedBalanceOf(msg.sender) >= 500 * 10**18, "DWEscrow: must stake at least 500 DMCU");
         
         inspectorPool.push(msg.sender);
         isInspectorRegistered[msg.sender] = true;
     }
 
     /**
-     * @dev Homeowner creates a service contract and deposits DWS stablecoin into escrow
+     * @dev Homeowner creates a service contract and deposits DMCS stablecoin into escrow
      */
     function createJob(
         address contractor,
@@ -111,8 +111,8 @@ contract DWEscrow is Ownable {
             totalJobCost += milestoneAmounts[i];
         }
 
-        // Transfer DWS from homeowner to Escrow
-        require(dwsToken.transferFrom(msg.sender, address(this), totalJobCost), "DWEscrow: deposit failed");
+        // Transfer DMCS from homeowner to Escrow
+        require(dmcsToken.transferFrom(msg.sender, address(this), totalJobCost), "DWEscrow: deposit failed");
 
         uint256 jobId = ++jobCount;
         Job storage newJob = jobs[jobId];
@@ -182,7 +182,7 @@ contract DWEscrow is Ownable {
         require(selectedInspector != job.homeowner && selectedInspector != job.contractor, "DWEscrow: failed to find neutral inspector");
         
         // Lock inspector stake (anti-collusion collateral)
-        dwgToken.lockStake(selectedInspector, INSPECTOR_LOCK);
+        dmcuToken.lockStake(selectedInspector, INSPECTOR_LOCK);
         
         job.milestones[milestoneIndex].assignedInspector = selectedInspector;
 
@@ -201,17 +201,17 @@ contract DWEscrow is Ownable {
         require(msg.sender == m.assignedInspector, "DWEscrow: not the assigned inspector");
         require(m.status == MilestoneStatus.Requested, "DWEscrow: verification not pending");
 
-        dwgToken.unlockStake(msg.sender, INSPECTOR_LOCK);
+        dmcuToken.unlockStake(msg.sender, INSPECTOR_LOCK);
 
         if (approve) {
             m.status = MilestoneStatus.Approved;
             job.currentMilestoneIndex++;
 
             // Release payment to contractor
-            require(dwsToken.transfer(job.contractor, m.amount), "DWEscrow: payment transfer failed");
+            require(dmcsToken.transfer(job.contractor, m.amount), "DWEscrow: payment transfer failed");
 
-            // Mint verification reward in DWG to inspector
-            dwgToken.mint(msg.sender, INSPECTION_REWARD_DWG);
+            // Mint verification reward in DMCU to inspector
+            dmcuToken.mint(msg.sender, INSPECTION_REWARD_DMCU);
 
             emit MilestoneApproved(jobId, mIdx, msg.sender);
 
@@ -245,8 +245,8 @@ contract DWEscrow is Ownable {
         d.resolved = false;
 
         // Escrow collects arbitration fee (flat fee in stable token)
-        require(dwsToken.transferFrom(job.homeowner, address(this), ARBITRATION_FEE_USD), "DWEscrow: homeowner arbitration fee failed");
-        require(dwsToken.transferFrom(job.contractor, address(this), ARBITRATION_FEE_USD), "DWEscrow: contractor arbitration fee failed");
+        require(dmcsToken.transferFrom(job.homeowner, address(this), ARBITRATION_FEE_USD), "DWEscrow: homeowner arbitration fee failed");
+        require(dmcsToken.transferFrom(job.contractor, address(this), ARBITRATION_FEE_USD), "DWEscrow: contractor arbitration fee failed");
 
         emit DisputeRaised(jobId);
     }
@@ -265,7 +265,7 @@ contract DWEscrow is Ownable {
         require(!d.hasVoted[msg.sender], "DWEscrow: already voted");
 
         // Lock voting stake
-        dwgToken.lockStake(msg.sender, JURY_VOTE_LOCK);
+        dmcuToken.lockStake(msg.sender, JURY_VOTE_LOCK);
 
         d.hasVoted[msg.sender] = true;
         d.votedForHomeowner[msg.sender] = voteForHomeowner;
@@ -304,16 +304,16 @@ contract DWEscrow is Ownable {
         // Payout escrowed amount
         if (homeownerWon) {
             // Refund milestone amount back to homeowner
-            require(dwsToken.transfer(job.homeowner, milestoneAmount), "DWEscrow: refund failed");
+            require(dmcsToken.transfer(job.homeowner, milestoneAmount), "DWEscrow: refund failed");
             registry.updateStats(job.contractor, 1); // 1-star penalty rating
         } else {
             // Release milestone amount to contractor
-            require(dwsToken.transfer(job.contractor, milestoneAmount), "DWEscrow: payment failed");
+            require(dmcsToken.transfer(job.contractor, milestoneAmount), "DWEscrow: payment failed");
             registry.updateStats(job.contractor, 5); // Cleared of charges
         }
 
         // Refund winner's arbitration fee
-        require(dwsToken.transfer(winner, ARBITRATION_FEE_USD), "DWEscrow: winner fee refund failed");
+        require(dmcsToken.transfer(winner, ARBITRATION_FEE_USD), "DWEscrow: winner fee refund failed");
 
         // Total fee pool to distribute to coherent jurors (loser's fee + any platform portion)
         // Let's distribute the loser's fee to majority jurors
@@ -327,16 +327,16 @@ contract DWEscrow is Ownable {
 
             if (votedCorrectly) {
                 // Unlock voting stake
-                dwgToken.unlockStake(juror, JURY_VOTE_LOCK);
-                // Distribute DWS rewards
+                dmcuToken.unlockStake(juror, JURY_VOTE_LOCK);
+                // Distribute DMCS rewards
                 if (feeShare > 0) {
-                    require(dwsToken.transfer(juror, feeShare), "DWEscrow: fee distribution failed");
+                    require(dmcsToken.transfer(juror, feeShare), "DWEscrow: fee distribution failed");
                 }
             } else {
                 // Slash 10% of locked vote stake
                 uint256 slashAmount = JURY_VOTE_LOCK / 10;
-                dwgToken.slashStake(juror, slashAmount);
-                dwgToken.unlockStake(juror, JURY_VOTE_LOCK - slashAmount);
+                dmcuToken.slashStake(juror, slashAmount);
+                dmcuToken.unlockStake(juror, JURY_VOTE_LOCK - slashAmount);
             }
         }
 

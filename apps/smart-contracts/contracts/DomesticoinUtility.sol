@@ -5,11 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title DWGToken
- * @dev Dynamic emission and staking utility token for the Demandable Web (DW) ecosystem.
- * Supports minting of peer validator rewards, staking of service credentials, and slashing.
+ * @title DomesticoinUtility
+ * @dev Dynamic emission and staking utility token for the Demandable Web ecosystem.
+ * Represents $DMCU token, used for validator bounds, dispute stakers, and rewards.
  */
-contract DWGToken is ERC20, Ownable {
+contract DomesticoinUtility is ERC20, Ownable {
     mapping(address => bool) public isMinter;
 
     // Staking tracking
@@ -22,12 +22,12 @@ contract DWGToken is ERC20, Ownable {
     event MinterStatusChanged(address indexed minter, bool status);
 
     modifier onlyMinter() {
-        require(isMinter[msg.sender] || msg.sender == owner(), "DWGToken: caller is not authorized");
+        require(isMinter[msg.sender] || msg.sender == owner(), "DomesticoinUtility: caller is not authorized");
         _;
     }
 
-    constructor(address initialOwner) ERC20("Demandable Web Governance", "DWG") Ownable(initialOwner) {
-        // Mint 10,000,000 DWG tokens to the initial owner for liquidity/ecosystem rewards
+    constructor(address initialOwner) ERC20("Domesticoin Utility", "DMCU") Ownable(initialOwner) {
+        // Mint 10,000,000 DMCU tokens to the initial owner for liquidity/ecosystem rewards
         _mint(initialOwner, 10000000 * 10 ** decimals());
     }
 
@@ -47,23 +47,23 @@ contract DWGToken is ERC20, Ownable {
     }
 
     /**
-     * @dev User stakes DWG tokens to qualify as an inspector or dispute voter
+     * @dev User stakes DMCU tokens to qualify as an inspector or dispute voter
      */
     function stake(uint256 amount) external {
-        require(amount > 0, "DWGToken: stake amount must be > 0");
+        require(amount > 0, "DomesticoinUtility: stake amount must be > 0");
         _transfer(msg.sender, address(this), amount);
         _stakedBalances[msg.sender] += amount;
         emit Staked(msg.sender, amount);
     }
 
     /**
-     * @dev User unstakes DWG tokens (only available unlocked balance can be withdrawn)
+     * @dev User unstakes DMCU tokens (only available unlocked balance can be withdrawn)
      */
     function unstake(uint256 amount) external {
-        require(amount > 0, "DWGToken: unstake amount must be > 0");
+        require(amount > 0, "DomesticoinUtility: unstake amount must be > 0");
         require(
             _stakedBalances[msg.sender] - _lockedBalances[msg.sender] >= amount,
-            "DWGToken: insufficient unlocked stake"
+            "DomesticoinUtility: insufficient unlocked stake"
         );
         _stakedBalances[msg.sender] -= amount;
         _transfer(address(this), msg.sender, amount);
@@ -76,7 +76,7 @@ contract DWGToken is ERC20, Ownable {
     function lockStake(address account, uint256 amount) external onlyMinter {
         require(
             _stakedBalances[account] - _lockedBalances[account] >= amount,
-            "DWGToken: insufficient available stake to lock"
+            "DomesticoinUtility: insufficient available stake to lock"
         );
         _lockedBalances[account] += amount;
     }
@@ -85,7 +85,7 @@ contract DWGToken is ERC20, Ownable {
      * @dev Unlocks stake after job/dispute completion
      */
     function unlockStake(address account, uint256 amount) external onlyMinter {
-        require(_lockedBalances[account] >= amount, "DWGToken: insufficient locked balance");
+        require(_lockedBalances[account] >= amount, "DomesticoinUtility: insufficient locked balance");
         _lockedBalances[account] -= amount;
     }
 
@@ -93,7 +93,7 @@ contract DWGToken is ERC20, Ownable {
      * @dev Slashes staked tokens due to poor oversight, fraud, or incorrect dispute votes
      */
     function slashStake(address account, uint256 amount) external onlyMinter {
-        require(_stakedBalances[account] >= amount, "DWGToken: insufficient staked balance to slash");
+        require(_stakedBalances[account] >= amount, "DomesticoinUtility: insufficient staked balance to slash");
         
         // Adjust locked balances
         if (_lockedBalances[account] >= amount) {
@@ -113,10 +113,12 @@ contract DWGToken is ERC20, Ownable {
         return _stakedBalances[account];
     }
 
+    // Locked balance view
     function lockedBalanceOf(address account) external view returns (uint256) {
         return _lockedBalances[account];
     }
 
+    // Available stake view
     function availableStakeOf(address account) external view returns (uint256) {
         return _stakedBalances[account] - _lockedBalances[account];
     }

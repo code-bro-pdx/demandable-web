@@ -3,43 +3,141 @@
 // Backend endpoint configuration (falls back to mock database if server is offline)
 const API_URL = "http://localhost:8000";
 
-// Simulation Wallets representing different actors
+// Simulation Wallets representing different actors with Domesticoin Stable ($DMCS) & Domesticoin Utility ($DMCU)
 const WALLETS = {
   homeowner: {
     address: "0x7a839Fde147A3e89DeCb01235477B79a785245d3",
     role: "Homeowner",
     label: "Homeowner (Alice)",
-    balanceDWS: 5000,
-    balanceDWG: 0,
-    stakedDWG: 0
+    balanceDMCS: 5000,
+    balanceDMCU: 0,
+    stakedDMCU: 0
   },
   contractor: {
     address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", // Apex Roofing Specialists address
     role: "Contractor",
     label: "Contractor (Apex Roofing)",
-    balanceDWS: 1000,
-    balanceDWG: 500,
-    stakedDWG: 0
+    balanceDMCS: 1000,
+    balanceDMCU: 500,
+    stakedDMCU: 0
   },
   inspector: {
     address: "0x90F8bf323369FD0297AB4208f93D8b8490b4698e", // Bob address
     role: "Inspector / Peer Pro",
     label: "Inspector (Bob - Precision Tile)",
-    balanceDWS: 800,
-    balanceDWG: 1200,
-    stakedDWG: 0
+    balanceDMCS: 800,
+    balanceDMCU: 1200,
+    stakedDMCU: 0
   },
   juror: {
     address: "0x2546BcD3c84621e9a6d9435b474955bbf8d7e1fd",
     role: "Jury Pool Member",
     label: "Juror (Charlie - EcoClean)",
-    balanceDWS: 200,
-    balanceDWG: 2000,
-    stakedDWG: 0
+    balanceDMCS: 200,
+    balanceDMCU: 2000,
+    stakedDMCU: 0
+  }
+};
+
+// UX Terminology Translation Mappings
+const UX_TRANSLATIONS = {
+  traditional: {
+    "wallet-connect": "Access Secure Account",
+    "wallet-status-disconnected": "Account Not Connected",
+    "wallet-status-connected": "Secure Account Active",
+    "escrow-header": "Standard Contract & Service Deposit",
+    "bid-placeholder": "Paste the contractor's raw estimate text here. Our system will distill it into clear project milestones...",
+    "fund-btn-text": "Fund Deposit & Activate Contract",
+    "total-cost-label": "Total Cost:",
+    "inspector-staking-header": "Expert Verification & Inspection Bond",
+    "register-inspector-btn": "Register as Verification Expert",
+    "staked-label": "Your Security Bond",
+    "stake-btn": "Deposit 500 Reputation Points",
+    "dispute-header": "Disagreement Review Panel",
+    "dispute-desc": "Review disagreements on project milestones. Aligning with other experts earns you part of the review fee. Incorrect feedback reduces your reputation points.",
+    "raise-dispute-btn": "Submit to Dispute Review",
+    "job-status-disputed": "⚠️ Under Review",
+    "vote-contractor-btn": "Support Contractor",
+    "vote-homeowner-btn": "Support Customer",
+    "resolve-btn": "Simulate 7 days & Tally Decision",
+    "token-symbol-dmcs": "USD",
+    "token-symbol-dmcu": "Reputation Points",
+    "inspector-jobs-title": "Milestone Inspections Assigned To You",
+    "inspector-jobs-empty": "No inspection requests assigned to you.",
+    "contractor-jobs-title": "Active Service Projects",
+    "job-label": "Project",
+    "contractor-label": "Service Provider",
+    "customer-label": "Customer",
+    "inspecting-reward": "Reward:",
+    "active-milestone": "Current Step",
+    "all-milestones-completed": "All steps completed successfully"
+  },
+  hybrid: {
+    "wallet-connect": "Connect Secure Wallet (Base)",
+    "wallet-status-disconnected": "Wallet Not Connected",
+    "wallet-status-connected": "Secure Wallet Connected",
+    "escrow-header": "Escrow Deposit (USD Stablecoin)",
+    "bid-placeholder": "Paste the contractor's raw estimate text here. The AI Agent will convert it to blockchain escrow milestones...",
+    "fund-btn-text": "Fund Escrow & Deploy Smart Contract",
+    "total-cost-label": "Total Escrow Cost:",
+    "inspector-staking-header": "Inspector Staking & Escrow Audit",
+    "register-inspector-btn": "Register as Inspector (Stake DMCU)",
+    "staked-label": "Your Staked Balance (DMCU)",
+    "stake-btn": "Stake 500 $DMCU",
+    "dispute-header": "Jury Pool & Schelling Point Voting",
+    "dispute-desc": "Stake your $DMCU to vote on disputes. Voting with the majority distributes a share of the loser's arbitration fee ($DMCS). Incorrect votes result in a token slash.",
+    "raise-dispute-btn": "Raise Escrow Dispute",
+    "job-status-disputed": "⚠️ Disputed (Voting Active)",
+    "vote-contractor-btn": "Vote Contractor (Coherent)",
+    "vote-homeowner-btn": "Vote Homeowner (Coherent)",
+    "resolve-btn": "Simulate 7 days & Tally Votes",
+    "token-symbol-dmcs": "DMCS",
+    "token-symbol-dmcu": "DMCU",
+    "inspector-jobs-title": "Escrow Audits Assigned To You",
+    "inspector-jobs-empty": "No audit requests assigned to you.",
+    "contractor-jobs-title": "Escrow Projects",
+    "job-label": "Escrow #",
+    "contractor-label": "Contractor",
+    "customer-label": "Homeowner",
+    "inspecting-reward": "Auditor Reward:",
+    "active-milestone": "Active Milestone",
+    "all-milestones-completed": "All milestones resolved"
+  },
+  native: {
+    "wallet-connect": "Connect Coinbase Smart Wallet",
+    "wallet-status-disconnected": "Wallet Not Connected",
+    "wallet-status-connected": "Wallet Connected",
+    "escrow-header": "Smart Contract Escrow Generation",
+    "bid-placeholder": "Paste the contractor's raw estimate text here. The AI Agent will distill it into binding smart contract milestones...",
+    "fund-btn-text": "Fund Escrow & Deploy Smart Contract",
+    "total-cost-label": "Total Cost:",
+    "inspector-staking-header": "Peer Inspector Staking & Duties",
+    "register-inspector-btn": "Register as Inspector",
+    "staked-label": "Your Staked Balance",
+    "stake-btn": "Stake 500 $DMCU",
+    "dispute-header": "Decentralized Dispute Jury (Schelling Point)",
+    "dispute-desc": "Stake your `$DMCU` to vote on disputes. Voting correctly (coherently with majority) distributes a share of the loser's arbitration fee. Voting incorrectly slashes 10% of your voting stake.",
+    "raise-dispute-btn": "Escalate to Dispute Jury",
+    "job-status-disputed": "⚠️ Contract Disputed",
+    "vote-contractor-btn": "Vote Contractor",
+    "vote-homeowner-btn": "Vote Homeowner",
+    "resolve-btn": "Simulate 7 days & Tally Vote",
+    "token-symbol-dmcs": "$DMCS",
+    "token-symbol-dmcu": "$DMCU",
+    "inspector-jobs-title": "Milestone Inspections Assigned To You",
+    "inspector-jobs-empty": "No active milestone inspections assigned to your address.",
+    "contractor-jobs-title": "Contractor Active Jobs",
+    "job-label": "Job #",
+    "contractor-label": "Vetted Pro",
+    "customer-label": "Homeowner",
+    "inspecting-reward": "Reward:",
+    "active-milestone": "Active Milestone",
+    "all-milestones-completed": "All milestones completed"
   }
 };
 
 // Global App State
+let uxMode = localStorage.getItem("dw_ux_mode") || "traditional";
 let currentActor = null; // Cycles through WALLETS
 let activeTab = "homeowner";
 let matchedContractors = [];
@@ -61,15 +159,157 @@ function saveDB() {
   localStorage.setItem("dw_blockchain_db", JSON.stringify(db));
 }
 
-// Initialization
+// Translate Term Helper
+function getUXTerm(termKey) {
+  const modeTerms = UX_TRANSLATIONS[uxMode] || UX_TRANSLATIONS["traditional"];
+  const term = modeTerms[termKey];
+  if (!term) return "";
+  
+  // If hybrid mode, add descriptive tooltips to make it educational
+  if (uxMode === 'hybrid') {
+    if (termKey === 'wallet-connect' || termKey === 'wallet-status-connected') {
+      return `<span class="ux-tooltip">${term}<span class="ux-tooltiptext">A wallet is a secure digital account on the blockchain that acts as your identity and holds funds.</span></span>`;
+    }
+    if (termKey === 'escrow-header') {
+      return `<span class="ux-tooltip">${term}<span class="ux-tooltiptext">Escrow is a secure smart contract that holds project funds until milestones are audited and verified.</span></span>`;
+    }
+    if (termKey === 'fund-btn-text') {
+      return `<span class="ux-tooltip">${term}<span class="ux-tooltiptext">Deploys automated code to the blockchain, locking funds in escrow to protect both parties.</span></span>`;
+    }
+    if (termKey === 'inspector-staking-header') {
+      return `<span class="ux-tooltip">${term}<span class="ux-tooltiptext">Auditors stake tokens as collateral. Being dishonest results in losing (slashing) their collateral.</span></span>`;
+    }
+    if (termKey === 'dispute-header') {
+      return `<span class="ux-tooltip">${term}<span class="ux-tooltiptext">A game-theoretic voting system (Schelling Point) where stakers vote honestly to reach agreement.</span></span>`;
+    }
+    if (termKey === 'token-symbol-dmcs') {
+      return `<span class="ux-tooltip">${term}<span class="ux-tooltiptext">Domesticoin Stablecoin ($DMCS) is a token pegged 1:1 to the US Dollar value.</span></span>`;
+    }
+    if (termKey === 'token-symbol-dmcu') {
+      return `<span class="ux-tooltip">${term}<span class="ux-tooltiptext">Domesticoin Utility ($DMCU) is a token used to stake, vote, and earn rewards.</span></span>`;
+    }
+  }
+  return term;
+}
+
+// Apply Selected UX Level Terminology and Displays
+function applyUXMode() {
+  // Update elements with data-ux-term
+  const elements = document.querySelectorAll("[data-ux-term]");
+  elements.forEach(el => {
+    const termKey = el.dataset.uxTerm;
+    const translation = getUXTerm(termKey);
+    if (translation) {
+      el.innerHTML = translation;
+    }
+  });
+
+  // Translate input/textarea placeholders
+  const bidText = document.getElementById("bidText");
+  if (bidText) {
+    bidText.setAttribute("placeholder", getUXTerm("bid-placeholder"));
+  }
+
+  // Update change settings indicator text
+  const currentUXDisplay = document.getElementById("currentUXDisplay");
+  if (currentUXDisplay) {
+    currentUXDisplay.textContent = uxMode.charAt(0).toUpperCase() + uxMode.slice(1);
+  }
+
+  // Hide or Show technical developer attributes
+  const advancedEls = document.querySelectorAll(".ux-advanced");
+  advancedEls.forEach(el => {
+    if (uxMode === 'traditional') {
+      el.classList.add("hidden");
+    } else {
+      el.classList.remove("hidden");
+    }
+  });
+
+  // Highlight selection in Onboarding Dialog
+  const cards = document.querySelectorAll(".onboarding-card");
+  cards.forEach(card => {
+    if (card.dataset.level === uxMode) {
+      card.classList.add("selected");
+    } else {
+      card.classList.remove("selected");
+    }
+  });
+
+  const startBtn = document.getElementById("startAppBtn");
+  if (startBtn) {
+    startBtn.disabled = false;
+    startBtn.textContent = `Launch DApp (${uxMode.charAt(0).toUpperCase() + uxMode.slice(1)} Mode)`;
+  }
+}
+
+// Initialization and Setup
 document.addEventListener("DOMContentLoaded", () => {
   setupTabs();
   setupWallet();
+  setupOnboarding();
   setupHomeownerEvents();
   setupContractorEvents();
   setupInspectorEvents();
   renderAll();
 });
+
+// Onboarding Modal Handling
+function setupOnboarding() {
+  const modal = document.getElementById("onboardingModal");
+  const changeUXBtn = document.getElementById("changeUXBtn");
+  const startAppBtn = document.getElementById("startAppBtn");
+  const cards = document.querySelectorAll(".onboarding-card");
+
+  // Show onboarding overlay if it's the first visit
+  if (!localStorage.getItem("dw_ux_onboarded")) {
+    setTimeout(() => {
+      modal.showModal();
+      applyUXMode();
+    }, 300);
+  }
+
+  // Setup click handlers for modal cards selection
+  cards.forEach(card => {
+    card.addEventListener("click", () => {
+      uxMode = card.dataset.level;
+      localStorage.setItem("dw_ux_mode", uxMode);
+      applyUXMode();
+    });
+  });
+
+  // Submit/close modal
+  startAppBtn.addEventListener("click", () => {
+    localStorage.setItem("dw_ux_onboarded", "true");
+    modal.close();
+    renderAll();
+  });
+
+  // Open modal anytime via Settings toggler
+  changeUXBtn.addEventListener("click", () => {
+    modal.showModal();
+    applyUXMode();
+  });
+
+  // Backdrop light dismiss fallback for older browsers
+  if (!('closedBy' in HTMLDialogElement.prototype)) {
+    modal.addEventListener("click", (event) => {
+      if (event.target !== modal) return;
+      
+      const rect = modal.getBoundingClientRect();
+      const isInsideContent = (
+        rect.top <= event.clientY &&
+        event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX &&
+        event.clientX <= rect.left + rect.width
+      );
+
+      if (!isInsideContent && localStorage.getItem("dw_ux_onboarded")) {
+        modal.close();
+      }
+    });
+  }
+}
 
 // Tab Switcher Setup
 function setupTabs() {
@@ -111,20 +351,31 @@ function showToast(text, isError = false) {
 // Wallet setup
 function setupWallet() {
   const walletBtn = document.getElementById("walletBtn");
-  const walletText = document.getElementById("walletText");
   
   walletBtn.addEventListener("click", () => {
     const roles = Object.keys(WALLETS);
     if (!currentActor) {
       currentActor = "homeowner";
       walletBtn.classList.add("connected");
-      showToast(`Coinbase Smart Wallet Connected as ${WALLETS[currentActor].label}`);
+      
+      const friendlyName = WALLETS[currentActor].label.split(" (")[0];
+      if (uxMode === 'traditional') {
+        showToast(`Secure Account Access granted for ${friendlyName}`);
+      } else {
+        showToast(`Connected Wallet: ${WALLETS[currentActor].label}`);
+      }
     } else {
       // Cycle through actors for easy demoing
       const currIdx = roles.indexOf(currentActor);
       const nextIdx = (currIdx + 1) % roles.length;
       currentActor = roles[nextIdx];
-      showToast(`Switched active wallet to ${WALLETS[currentActor].label}`);
+      
+      const friendlyName = WALLETS[currentActor].label.split(" (")[0];
+      if (uxMode === 'traditional') {
+        showToast(`Switched active profile to ${friendlyName}`);
+      } else {
+        showToast(`Switched active wallet to ${WALLETS[currentActor].label}`);
+      }
     }
     
     // Save active wallet status
@@ -180,7 +431,6 @@ function setupHomeownerEvents() {
     } catch (e) {
       // Fallback matching logic in browser
       console.log("Using browser-side fallback matching logic...");
-      // Apex Roofing, Precision Tile, EcoClean, A+ STEM
       const fallbackList = [
         {
           walletAddress: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
@@ -190,7 +440,7 @@ function setupHomeownerEvents() {
           score: 0.945,
           metadataURI: "ipfs://factual-profile-data-apex",
           pros: ["C-39 Licensed Roofing Contractor", "Utilizes drone imagery and thermal scan equipment", "142 jobs completed without unresolved customer disputes"],
-          cons: ["High demand structure, minimum project sizes of 500 DWS may apply"]
+          cons: ["High demand structure, minimum project sizes of 500 DMCS may apply"]
         },
         {
           walletAddress: "0x90F8bf323369FD0297AB4208f93D8b8490b4698e",
@@ -277,20 +527,21 @@ function setupHomeownerEvents() {
 
   fundEscrowBtn.addEventListener("click", () => {
     if (!currentActor || currentActor !== "homeowner") {
-      showToast("Switch to Homeowner wallet to fund the contract escrow", true);
+      const actorLabel = getUXTerm("customer-label");
+      showToast(`Switch to ${actorLabel} to fund the project deposit`, true);
       return;
     }
 
     const homeownerInfo = WALLETS.homeowner;
     const totalCost = parsedMilestones.totalAmount;
 
-    if (homeownerInfo.balanceDWS < totalCost) {
-      showToast("Insufficient DWS stable token balance", true);
+    if (homeownerInfo.balanceDMCS < totalCost) {
+      showToast(`Insufficient ${getUXTerm("token-symbol-dmcs")} balance`, true);
       return;
     }
 
     // Deploy contract simulation
-    homeownerInfo.balanceDWS -= totalCost;
+    homeownerInfo.balanceDMCS -= totalCost;
     
     // Add job to local blockchain db
     const jobId = db.jobs.length + 1;
@@ -313,7 +564,11 @@ function setupHomeownerEvents() {
     db.jobs.push(newJob);
     saveDB();
     
-    showToast(`Deployed DWEscrow smart contract (Job ID: #${jobId}). funded ${totalCost} $DWS into escrow.`);
+    if (uxMode === 'traditional') {
+      showToast(`Activated project agreement #${jobId}. Funded $${totalCost} USD.`);
+    } else {
+      showToast(`Deployed DWEscrow smart contract (Job ID: #${jobId}). Funded ${totalCost} $DMCS into escrow.`);
+    }
     
     // Reset inputs
     selectedContractor = null;
@@ -341,14 +596,19 @@ function setupInspectorEvents() {
     }
 
     const actor = WALLETS[currentActor];
-    if (actor.balanceDWG < 500) {
-      showToast("Need at least 500 $DWG utility tokens in wallet balance", true);
+    if (actor.balanceDMCU < 500) {
+      showToast(`Need at least 500 ${getUXTerm("token-symbol-dmcu")} in balance`, true);
       return;
     }
 
-    actor.balanceDWG -= 500;
-    actor.stakedDWG += 500;
-    showToast(`Staked 500 $DWG to qualify as platform inspector`);
+    actor.balanceDMCU -= 500;
+    actor.stakedDMCU += 500;
+    
+    if (uxMode === 'traditional') {
+      showToast(`Bonded 500 Reputation Points to qualify as verification expert.`);
+    } else {
+      showToast(`Staked 500 $DMCU to qualify as platform inspector`);
+    }
     
     renderAll();
   });
@@ -356,12 +616,16 @@ function setupInspectorEvents() {
   registerInspectorBtn.addEventListener("click", () => {
     if (!currentActor) return;
     const actor = WALLETS[currentActor];
-    if (actor.stakedDWG < 500) {
-      showToast("Must have staked at least 500 $DWG", true);
+    if (actor.stakedDMCU < 500) {
+      showToast(`Must have staked at least 500 ${getUXTerm("token-symbol-dmcu")}`, true);
       return;
     }
     
-    showToast(`Successfully registered ${actor.address.slice(0,6)}... as active inspector!`);
+    if (uxMode === 'traditional') {
+      showToast(`Successfully registered as verification expert!`);
+    } else {
+      showToast(`Successfully registered ${actor.address.slice(0,6)}... as active inspector!`);
+    }
     renderAll();
   });
 }
@@ -374,6 +638,7 @@ function renderAll() {
   renderContractorJobs();
   renderInspectorJobs();
   renderDisputes();
+  applyUXMode();
 }
 
 function renderWalletStatus() {
@@ -382,17 +647,26 @@ function renderWalletStatus() {
   const contractorWalletDisplay = document.getElementById("contractorWalletDisplay");
   
   if (!currentActor) {
-    walletText.textContent = "Connect Coinbase Smart Wallet";
-    contractorWalletDisplay.textContent = "Wallet Not Connected";
+    walletText.textContent = getUXTerm("wallet-connect");
+    contractorWalletDisplay.textContent = getUXTerm("wallet-status-disconnected");
     return;
   }
   
   const actor = WALLETS[currentActor];
-  walletText.textContent = `${actor.label} (${actor.balanceDWS} DWS | ${actor.balanceDWG} DWG)`;
-  contractorWalletDisplay.textContent = `${currentActor === 'contractor' ? 'Active' : 'Viewing Role'} — ${actor.address.slice(0, 10)}...`;
-
-  // Staked DWG display in inspector board
-  document.getElementById("stakedDWG").textContent = `${actor.stakedDWG.toFixed(1)} DWG`;
+  
+  if (uxMode === 'traditional') {
+    walletText.textContent = `${actor.label.split(' (')[0]} ($${actor.balanceDMCS} USD)`;
+    contractorWalletDisplay.textContent = `${currentActor === 'contractor' ? 'Active Profile' : 'Viewing Role'}`;
+    document.getElementById("stakedDMCU").textContent = `${actor.stakedDMCU.toFixed(0)} Points`;
+  } else if (uxMode === 'hybrid') {
+    walletText.textContent = `${actor.label} ($${actor.balanceDMCS} USD Stable | ${actor.balanceDMCU} DMCU)`;
+    contractorWalletDisplay.textContent = `${currentActor === 'contractor' ? 'Active' : 'Viewing Role'} — ${actor.address.slice(0, 10)}...`;
+    document.getElementById("stakedDMCU").textContent = `${actor.stakedDMCU.toFixed(1)} DMCU`;
+  } else {
+    walletText.textContent = `${actor.label} (${actor.balanceDMCS} DMCS | ${actor.balanceDMCU} DMCU)`;
+    contractorWalletDisplay.textContent = `${currentActor === 'contractor' ? 'Active' : 'Viewing Role'} — ${actor.address.slice(0, 10)}...`;
+    document.getElementById("stakedDMCU").textContent = `${actor.stakedDMCU.toFixed(1)} DMCU`;
+  }
 }
 
 function renderContractors() {
@@ -414,11 +688,15 @@ function renderContractors() {
       card.style.background = "rgba(0, 245, 255, 0.02)";
     }
 
+    const displayCons = c.cons.map(cn => {
+      return cn.replace("DWS", getUXTerm("token-symbol-dmcs"));
+    });
+
     card.innerHTML = `
       <div class="pro-header">
         <div>
           <div class="pro-name">${c.name}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">${c.walletAddress}</div>
+          <div class="ux-advanced" style="font-size: 0.75rem; color: var(--text-muted);">${c.walletAddress}</div>
         </div>
         <div class="pro-metric" style="text-align: right;">
           <div style="color: var(--accent-mint); font-weight: 600;">Match: ${(c.score * 100).toFixed(1)}%</div>
@@ -432,7 +710,7 @@ function renderContractors() {
         </div>
         <div class="cons-list">
           <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.2rem;">Factual Cons</div>
-          ${c.cons.map(cn => `<span>${cn}</span>`).join('')}
+          ${displayCons.map(cn => `<span>${cn}</span>`).join('')}
         </div>
       </div>
       <button class="select-pro-btn" data-address="${c.walletAddress}">
@@ -474,13 +752,13 @@ function renderMilestones() {
     const div = document.createElement("div");
     div.className = "milestone-item";
     div.innerHTML = `
-      <div class="milestone-name">Milestone #${idx + 1}: ${m.description}</div>
-      <div class="milestone-value">${m.amount} DWS</div>
+      <div class="milestone-name">${getUXTerm("active-milestone")} #${idx + 1}: ${m.description}</div>
+      <div class="milestone-value">${m.amount} ${getUXTerm("token-symbol-dmcs")}</div>
     `;
     container.appendChild(div);
   });
 
-  document.getElementById("totalEscrowCost").textContent = `${parsedMilestones.totalAmount} DWS`;
+  document.getElementById("totalEscrowCost").textContent = `${parsedMilestones.totalAmount} ${getUXTerm("token-symbol-dmcs")}`;
 }
 
 function renderContractorJobs() {
@@ -488,20 +766,19 @@ function renderContractorJobs() {
   list.innerHTML = "";
 
   if (db.jobs.length === 0) {
-    list.innerHTML = `<div class="text-muted" style="text-align: center; padding: 20px;">No active escrows registered under this wallet. Create a job first.</div>`;
+    list.innerHTML = `<div class="text-muted" style="text-align: center; padding: 20px;">No active service projects registered. Create a project first.</div>`;
     return;
   }
 
   db.jobs.forEach(job => {
     const activeIdx = job.currentMilestoneIndex;
-    const isCompleted = job.status === "Completed" || job.status === "Resolved";
     
-    let activeMilestoneText = "All milestones completed";
+    let activeMilestoneText = getUXTerm("all-milestones-completed");
     let milestoneAmount = "";
     
     if (activeIdx < job.milestones.length) {
-      activeMilestoneText = `Active Milestone #${activeIdx + 1}: ${job.milestones[activeIdx].description}`;
-      milestoneAmount = `${job.milestones[activeIdx].amount} DWS`;
+      activeMilestoneText = `${getUXTerm("active-milestone")} #${activeIdx + 1}: ${job.milestones[activeIdx].description}`;
+      milestoneAmount = `${job.milestones[activeIdx].amount} ${getUXTerm("token-symbol-dmcs")}`;
     }
 
     const jobCard = document.createElement("div");
@@ -511,31 +788,31 @@ function renderContractorJobs() {
     if (job.status === "Active" && activeIdx < job.milestones.length) {
       const activeM = job.milestones[activeIdx];
       if (activeM.status === "Pending" || activeM.status === "Rejected") {
-        actionButton = `<button class="select-pro-btn request-verify-btn" data-job="${job.id}" style="background: var(--accent-purple); color: white;">Request Milestone Verification</button>`;
+        actionButton = `<button class="select-pro-btn request-verify-btn" data-job="${job.id}" style="background: var(--accent-purple); color: white;">Request Step Verification</button>`;
       } else if (activeM.status === "Requested") {
         actionButton = `<span class="text-muted" style="font-size: 0.85rem; font-style: italic;">Verification Requested (${activeM.assignedInspector ? 'Inspector Assigned' : 'Finding Inspector...'})</span>`;
       }
     } else if (job.status === "Disputed") {
-      actionButton = `<span style="color: var(--accent-red); font-size: 0.85rem; font-weight: bold;">⚠️ Contract Disputed. Resolution pending jury votes.</span>`;
+      actionButton = `<span style="color: var(--accent-red); font-size: 0.85rem; font-weight: bold;">⚠️ Project Disputed. Resolution pending review.</span>`;
     }
 
-    // Add Dispute escalation button for Homeowner / Contractor if milestone was rejected
+    // Add Dispute escalation button if milestone was rejected
     let disputeButton = "";
     if (job.status === "Active" && activeIdx < job.milestones.length) {
       if (job.milestones[activeIdx].status === "Rejected") {
-        disputeButton = `<button class="select-pro-btn raise-dispute-btn" data-job="${job.id}" style="background: var(--accent-red); color: white; border-color: var(--accent-red);">Escalate to Dispute Jury</button>`;
+        disputeButton = `<button class="select-pro-btn raise-dispute-btn" data-job="${job.id}" style="background: var(--accent-red); color: white; border-color: var(--accent-red);">${getUXTerm("raise-dispute-btn")}</button>`;
       }
     }
 
     jobCard.innerHTML = `
       <div class="pro-header">
         <div>
-          <div class="pro-name">Job #${job.id} — Vetted Pro: ${job.contractorName}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">Homeowner: ${job.homeowner}</div>
+          <div class="pro-name"><span data-ux-term="job-label">Project</span> #${job.id} — <span data-ux-term="contractor-label">Service Provider</span>: ${job.contractorName}</div>
+          <div class="ux-advanced" style="font-size: 0.75rem; color: var(--text-muted);"><span data-ux-term="customer-label">Customer</span>: ${job.homeowner}</div>
         </div>
         <div class="pro-metric" style="text-align: right;">
-          <div style="color: var(--accent-cyan); font-weight: 700;">Status: ${job.status}</div>
-          <div>Total cost: ${job.totalAmount} DWS</div>
+          <div style="color: var(--accent-cyan); font-weight: 700;">Status: <span data-ux-term="job-status-${job.status.toLowerCase()}">${job.status}</span></div>
+          <div>Total cost: ${job.totalAmount} ${getUXTerm("token-symbol-dmcs")}</div>
         </div>
       </div>
       <div style="font-size: 0.9rem; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 6px;">
@@ -579,12 +856,12 @@ function renderContractorJobs() {
         }
 
         const actor = WALLETS[currentActor];
-        if (actor.balanceDWS < 20) {
-          showToast("Must have at least 20 $DWS in wallet to pay the flat dispute arbitration fee", true);
+        if (actor.balanceDMCS < 20) {
+          showToast(`Must have at least 20 ${getUXTerm("token-symbol-dmcs")} in wallet to pay the flat review fee`, true);
           return;
         }
 
-        actor.balanceDWS -= 20;
+        actor.balanceDMCS -= 20;
         job.status = "Disputed";
 
         // Create dispute listing
@@ -601,7 +878,7 @@ function renderContractorJobs() {
         });
 
         saveDB();
-        showToast(`Dispute raised on Job #${job.id}. locked $20 DWS arbitration fee.`);
+        showToast(`Dispute raised on Job #${job.id}. Locked 20 ${getUXTerm("token-symbol-dmcs")} review fee.`);
         renderAll();
       });
     }
@@ -627,12 +904,12 @@ function renderInspectorJobs() {
           <div class="pro-header">
             <div>
               <div class="pro-name">Milestone Inspection — Job #${job.id}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">Contractor: ${job.contractorName}</div>
+              <div class="ux-advanced" style="font-size: 0.75rem; color: var(--text-muted);">Contractor: ${job.contractorName}</div>
             </div>
-            <div style="color: var(--accent-cyan); font-weight: 600;">Reward: 50.0 $DWG</div>
+            <div style="color: var(--accent-cyan); font-weight: 600;">Reward: 50.0 ${getUXTerm("token-symbol-dmcu")}</div>
           </div>
           <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-            <strong>Scope to audit:</strong> ${m.description}
+            <strong>Scope to verify:</strong> ${m.description}
           </div>
           <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
             <button class="select-pro-btn reject-btn" style="background: rgba(255,51,102,0.1); border-color: var(--accent-red); color: var(--accent-red);">Reject Work</button>
@@ -650,16 +927,16 @@ function renderInspectorJobs() {
           job.currentMilestoneIndex++;
           
           // Pay contractor
-          WALLETS.contractor.balanceDWS += m.amount;
-          // Reward inspector in DWG
-          WALLETS.inspector.balanceDWG += 50;
+          WALLETS.contractor.balanceDMCS += m.amount;
+          // Reward inspector in DMCU
+          WALLETS.inspector.balanceDMCU += 50;
 
           if (job.currentMilestoneIndex === job.milestones.length) {
             job.status = "Completed";
           }
           
           saveDB();
-          showToast("Milestone approved. Funds released to contractor, and $DWG rewards minted to inspector.");
+          showToast(`Milestone approved. Released ${m.amount} ${getUXTerm("token-symbol-dmcs")} to contractor, and rewarded inspector.`);
           renderAll();
         });
 
@@ -710,8 +987,8 @@ function renderDisputes() {
     if (!userHasVoted) {
       votingButtons = `
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem;">
-          <button class="select-pro-btn vote-contractor-btn" style="border-color: var(--accent-purple); color: var(--text-primary);">Vote Contractor</button>
-          <button class="select-pro-btn vote-homeowner-btn" style="border-color: var(--accent-cyan); color: var(--text-primary);">Vote Homeowner</button>
+          <button class="select-pro-btn vote-contractor-btn" style="border-color: var(--accent-purple); color: var(--text-primary);">${getUXTerm("vote-contractor-btn")}</button>
+          <button class="select-pro-btn vote-homeowner-btn" style="border-color: var(--accent-cyan); color: var(--text-primary);">${getUXTerm("vote-homeowner-btn")}</button>
         </div>
       `;
     } else {
@@ -722,7 +999,7 @@ function renderDisputes() {
       <div class="pro-header">
         <div>
           <div class="pro-name">Dispute on Job #${d.jobId} — ${d.contractorName}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">Disputed milestone cost: ${d.milestoneAmount} DWS</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Disputed milestone cost: ${d.milestoneAmount} ${getUXTerm("token-symbol-dmcs")}</div>
         </div>
         <div style="text-align: right;">
           <div style="color: var(--accent-red); font-weight: bold;">Active Voting</div>
@@ -735,8 +1012,8 @@ function renderDisputes() {
       
       ${votingButtons}
       
-      <button class="btn-primary resolve-btn" style="margin-top: 0.75rem; padding: 0.4rem; font-size: 0.8rem; background: var(--text-muted);">
-        Simulate 7 days & Tally Vote
+      <button class="btn-primary resolve-btn" style="margin-top: 0.75rem; padding: 0.4rem; font-size: 0.8rem; background: var(--text-muted); width: auto; align-self: flex-end;">
+        ${getUXTerm("resolve-btn")}
       </button>
     `;
 
@@ -771,8 +1048,8 @@ function castVote(dispute, voteForHomeowner) {
   }
 
   const actor = WALLETS[currentActor];
-  if (actor.stakedDWG < 250) {
-    showToast("Must have at least 250 $DWG staked as inspector/juror to vote", true);
+  if (actor.stakedDMCU < 250) {
+    showToast(`Must have at least 250 ${getUXTerm("token-symbol-dmcu")} bonded to vote`, true);
     return;
   }
 
@@ -785,7 +1062,13 @@ function castVote(dispute, voteForHomeowner) {
   }
 
   saveDB();
-  showToast(`Voted for ${voteForHomeowner ? 'Homeowner' : 'Contractor'}. Locked 250 $DWG for jury duty.`);
+  
+  if (uxMode === 'traditional') {
+    showToast(`Voted for ${voteForHomeowner ? 'Customer' : 'Contractor'}. Locked 250 Reputation Points.`);
+  } else {
+    showToast(`Voted for ${voteForHomeowner ? 'Homeowner' : 'Contractor'}. Locked 250 $DMCU for jury duty.`);
+  }
+  
   renderAll();
 }
 
@@ -797,47 +1080,50 @@ function resolveDisputeTally(dispute) {
   job.status = "Resolved";
   
   const homeownerWon = dispute.homeownerVotes >= dispute.contractorVotes;
-  const winner = homeownerWon ? "Homeowner" : "Contractor";
   
   // Distribute escrow funds to winner
   if (homeownerWon) {
     // Refund milestone amount to homeowner wallet
-    WALLETS.homeowner.balanceDWS += dispute.milestoneAmount;
-    showToast(`Dispute resolved. Refunded ${dispute.milestoneAmount} DWS to homeowner.`);
+    WALLETS.homeowner.balanceDMCS += dispute.milestoneAmount;
+    showToast(`Dispute resolved. Refunded ${dispute.milestoneAmount} ${getUXTerm("token-symbol-dmcs")} to customer.`);
   } else {
     // Release payment to contractor wallet
-    WALLETS.contractor.balanceDWS += dispute.milestoneAmount;
-    showToast(`Dispute resolved. Released ${dispute.milestoneAmount} DWS to contractor.`);
+    WALLETS.contractor.balanceDMCS += dispute.milestoneAmount;
+    showToast(`Dispute resolved. Released ${dispute.milestoneAmount} ${getUXTerm("token-symbol-dmcs")} to contractor.`);
   }
 
   // Distribute arbitration fees to majority voters
-  // Total fees collected = 40 DWS (20 DWS from homeowner, 20 DWS from contractor)
-  // Winner gets their 20 DWS refunded. Loser's 20 DWS split among majority voters.
+  // Winner gets their 20 DMCS refunded. Loser's 20 DMCS split among majority voters.
   if (homeownerWon) {
-    WALLETS.homeowner.balanceDWS += 20; // refund
+    WALLETS.homeowner.balanceDMCS += 20; // refund
   } else {
-    WALLETS.contractor.balanceDWS += 20; // refund
+    WALLETS.contractor.balanceDMCS += 20; // refund
   }
 
-  // Distribute the remaining 20 DWS to winning voters
-  // Slashes 10% (25 DWG) from losing voters and distributes to winning voters or burns it
-  // For simplicity, we slash losing stakers and add yield to winning stakers in the WALLETS simulation:
   const winningVotes = homeownerWon ? dispute.homeownerVotes : dispute.contractorVotes;
-  const losingVotes = homeownerWon ? dispute.contractorVotes : dispute.homeownerVotes;
 
   // Simulate staking reward/slash adjustment in WALLETS
-  // If juror voted, we adjust their balances
   if (dispute.votedUsers.includes(WALLETS.juror.address)) {
-    const jurorVotedHomeowner = true; // Simulating Charlie's vote in the test UI
+    const jurorVotedHomeowner = true; // Charlie voted for homeowner
     const jurorWon = (jurorVotedHomeowner === homeownerWon);
     
     if (jurorWon) {
-      WALLETS.juror.balanceDWS += 20 / winningVotes; // share of loser fee
-      WALLETS.juror.balanceDWG += 10; // extra reward yield
-      showToast(`Jury duty payout: Juror (Charlie) earned DWS rewards and validator yield.`);
+      WALLETS.juror.balanceDMCS += 20 / (winningVotes || 1); // share of loser fee
+      WALLETS.juror.balanceDMCU += 10; // extra reward yield
+      
+      if (uxMode === 'traditional') {
+        showToast(`Review payout: Juror (Charlie) earned USD rewards and reputation points.`);
+      } else {
+        showToast(`Jury duty payout: Juror (Charlie) earned DMCS rewards and validator yield.`);
+      }
     } else {
-      WALLETS.juror.stakedDWG -= 25; // Slashed 10% of 250 locked
-      showToast(`Jury penalty: Juror (Charlie) was slashed 25 $DWG for voting with the minority.`, true);
+      WALLETS.juror.stakedDMCU -= 25; // Slashed 10% of 250 locked
+      
+      if (uxMode === 'traditional') {
+        showToast(`Jury penalty: Juror (Charlie) was slashed 25 reputation points for voting with the minority.`, true);
+      } else {
+        showToast(`Jury penalty: Juror (Charlie) was slashed 25 $DMCU for voting with the minority.`, true);
+      }
     }
   }
 
