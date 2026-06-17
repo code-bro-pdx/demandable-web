@@ -154,6 +154,9 @@ let db = {
 if (localStorage.getItem("dw_blockchain_db")) {
   db = JSON.parse(localStorage.getItem("dw_blockchain_db"));
 }
+db.schedules = db.schedules || [];
+db.jobs = db.jobs || [];
+db.disputes = db.disputes || [];
 
 function saveDB() {
   localStorage.setItem("dw_blockchain_db", JSON.stringify(db));
@@ -577,6 +580,76 @@ function setupHomeownerEvents() {
     
     renderAll();
   });
+
+  // Tab switcher for Planner widget
+  const btnShowMatch = document.getElementById("btnShowMatch");
+  const btnShowSchedule = document.getElementById("btnShowSchedule");
+  const paneMatch = document.getElementById("paneMatch");
+  const paneSchedule = document.getElementById("paneSchedule");
+
+  if (btnShowMatch && btnShowSchedule && paneMatch && paneSchedule) {
+    btnShowMatch.addEventListener("click", () => {
+      btnShowMatch.classList.add("active");
+      btnShowSchedule.classList.remove("active");
+      paneMatch.style.display = "block";
+      paneSchedule.style.display = "none";
+    });
+
+    btnShowSchedule.addEventListener("click", () => {
+      btnShowSchedule.classList.add("active");
+      btnShowMatch.classList.remove("active");
+      paneMatch.style.display = "none";
+      paneSchedule.style.display = "block";
+    });
+  }
+
+  // Deposit Funds
+  const depositFundsBtn = document.getElementById("depositFundsBtn");
+  if (depositFundsBtn) {
+    depositFundsBtn.addEventListener("click", () => {
+      if (!currentActor) {
+        showToast("Please connect your wallet first", true);
+        return;
+      }
+      const actor = WALLETS[currentActor];
+      actor.balanceDMCS += 1000;
+      saveDB();
+      if (uxMode === 'traditional') {
+        showToast("Added $1,000.00 USD to secure account balance.");
+      } else {
+        showToast("Deposited 1,000.00 $DMCS into wallet balance.");
+      }
+      renderAll();
+    });
+  }
+
+  // Add maintenance schedule
+  const confirmScheduleBtn = document.getElementById("confirmScheduleBtn");
+  if (confirmScheduleBtn) {
+    confirmScheduleBtn.addEventListener("click", () => {
+      if (!currentActor) {
+        showToast("Please connect your wallet first", true);
+        return;
+      }
+      const category = document.getElementById("scheduleCategory").value;
+      const date = document.getElementById("scheduleDate").value;
+      if (!date) {
+        showToast("Please select a target date", true);
+        return;
+      }
+
+      db.schedules = db.schedules || [];
+      db.schedules.push({
+        id: db.schedules.length + 1,
+        category: category,
+        date: date
+      });
+      saveDB();
+      showToast(`Added "${category}" on ${date} to maintenance checklist.`);
+      document.getElementById("scheduleDate").value = "";
+      renderAll();
+    });
+  }
 }
 
 // Contractor Logic
@@ -638,7 +711,370 @@ function renderAll() {
   renderContractorJobs();
   renderInspectorJobs();
   renderDisputes();
+  
+  // New Customer Portal renders
+  renderPortalAccount();
+  renderPipeline();
+  renderSchedules();
+  renderRepairHistory();
+  renderGovernanceDisputes();
+  
   applyUXMode();
+}
+
+function renderPortalAccount() {
+  const portalUSD = document.getElementById("portalUSD");
+  const portalWalletAddr = document.getElementById("portalWalletAddr");
+  
+  if (!portalUSD) return;
+  
+  if (!currentActor) {
+    portalUSD.textContent = "$0.00";
+    if (portalWalletAddr) portalWalletAddr.textContent = "Not Connected";
+    return;
+  }
+  
+  const actor = WALLETS[currentActor];
+  
+  if (uxMode === 'traditional') {
+    portalUSD.textContent = `$${actor.balanceDMCS.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    if (portalWalletAddr) portalWalletAddr.textContent = "Protected Custodial Wallet";
+  } else if (uxMode === 'hybrid') {
+    portalUSD.textContent = `$${actor.balanceDMCS.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD Stable`;
+    if (portalWalletAddr) portalWalletAddr.textContent = `${actor.address.slice(0, 10)}...${actor.address.slice(-6)}`;
+  } else {
+    portalUSD.textContent = `${actor.balanceDMCS} $DMCS`;
+    if (portalWalletAddr) portalWalletAddr.textContent = actor.address;
+  }
+}
+
+function renderPipeline() {
+  const container = document.getElementById("pipelineContainer");
+  const badge = document.getElementById("pipelineStatusBadge");
+  if (!container) return;
+
+  if (!currentActor) {
+    container.innerHTML = `<div class="text-muted" style="text-align: center; padding: 1.5rem 0; font-size: 0.85rem;">Please connect your wallet to view active projects.</div>`;
+    if (badge) {
+      badge.textContent = "Disconnected";
+      badge.style.background = "rgba(255,255,255,0.05)";
+      badge.style.color = "var(--text-secondary)";
+    }
+    return;
+  }
+
+  const actor = WALLETS[currentActor];
+  const activeJob = db.jobs.find(j => 
+    (j.homeowner === actor.address || j.contractor === actor.address) && 
+    (j.status === "Active" || j.status === "Disputed")
+  );
+
+  if (!activeJob) {
+    container.innerHTML = `<div class="text-muted" style="text-align: center; padding: 1.5rem 0; font-size: 0.85rem;">No active projects in progress. Search for services below to get started.</div>`;
+    if (badge) {
+      badge.textContent = "Idle";
+      badge.style.background = "rgba(255,255,255,0.05)";
+      badge.style.color = "var(--text-secondary)";
+    }
+    return;
+  }
+
+  if (badge) {
+    badge.textContent = activeJob.status;
+    if (activeJob.status === "Disputed") {
+      badge.style.background = "rgba(255,51,102,0.1)";
+      badge.style.color = "var(--accent-red)";
+    } else {
+      badge.style.background = "rgba(0,255,204,0.1)";
+      badge.style.color = "var(--accent-mint)";
+    }
+  }
+
+  const activeIdx = activeJob.currentMilestoneIndex;
+  const totalMilestones = activeJob.milestones.length;
+  
+  let step1Class = "completed";
+  let step2Class = "completed";
+  let step3Class = "active";
+  let step4Class = "";
+  let progressWidth = 33;
+
+  if (activeIdx >= totalMilestones) {
+    step3Class = "completed";
+    step4Class = "completed";
+    progressWidth = 100;
+  } else {
+    const currentM = activeJob.milestones[activeIdx];
+    if (currentM.status === "Approved") {
+      step3Class = "completed";
+      progressWidth = 66;
+    } else if (currentM.status === "Requested") {
+      step3Class = "active";
+      progressWidth = 50;
+    }
+  }
+
+  let activeMilestoneText = getUXTerm("all-milestones-completed");
+  let milestoneAmount = "";
+  let actionHtml = "";
+
+  if (activeIdx < totalMilestones) {
+    const currentM = activeJob.milestones[activeIdx];
+    activeMilestoneText = `${getUXTerm("active-milestone")} #${activeIdx + 1}: ${currentM.description}`;
+    
+    if (uxMode === 'traditional') {
+      milestoneAmount = `$${currentM.amount.toLocaleString()} USD`;
+    } else {
+      milestoneAmount = `${currentM.amount} ${getUXTerm("token-symbol-dmcs")}`;
+    }
+
+    if (currentM.status === "Rejected") {
+      actionHtml = `<button class="select-pro-btn raise-dispute-btn" data-job="${activeJob.id}" style="background: var(--accent-red); color: white; border-color: var(--accent-red); padding: 0.4rem 0.8rem; font-size: 0.8rem;">${getUXTerm("raise-dispute-btn")}</button>`;
+    } else if (currentM.status === "Pending") {
+      actionHtml = `<span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">Provider is working on this step.</span>`;
+    } else if (currentM.status === "Requested") {
+      actionHtml = `<span style="font-size: 0.8rem; color: var(--accent-cyan); font-style: italic;">Verification pending by expert inspector (${currentM.assignedInspector ? 'Assigned' : 'Finding Inspector...'}).</span>`;
+    }
+  }
+
+  container.innerHTML = `
+    <div class="pipeline-steps">
+      <div class="pipeline-progress-bar" style="width: ${progressWidth}%"></div>
+      <div class="pipeline-step ${step1Class}">
+        <div class="step-node">1</div>
+        <div class="step-label">Approved</div>
+      </div>
+      <div class="pipeline-step ${step2Class}">
+        <div class="step-node">2</div>
+        <div class="step-label">Funded</div>
+      </div>
+      <div class="pipeline-step ${step3Class}">
+        <div class="step-node">3</div>
+        <div class="step-label">Verified</div>
+      </div>
+      <div class="pipeline-step ${step4Class}">
+        <div class="step-node">4</div>
+        <div class="step-label">Released</div>
+      </div>
+    </div>
+    <div style="margin-top: 1.25rem; border-top: 1px dashed var(--card-border); padding-top: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">${activeJob.contractorName}</span>
+        <span style="font-size: 0.8rem; color: var(--accent-cyan); font-family: monospace;">Job #${activeJob.id}</span>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; line-height: 1.4;">
+        <strong>Current Milestone:</strong> ${activeMilestoneText}
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 0.75rem;">
+        <span style="color: var(--text-muted);">Step Value:</span>
+        <span style="font-weight: 600; color: var(--accent-mint);">${milestoneAmount}</span>
+      </div>
+      <div style="display: flex; justify-content: flex-end;">
+        ${actionHtml}
+      </div>
+    </div>
+  `;
+
+  const disputeBtn = container.querySelector(".raise-dispute-btn");
+  if (disputeBtn) {
+    disputeBtn.addEventListener("click", () => {
+      const actorInfo = WALLETS[currentActor];
+      if (actorInfo.balanceDMCS < 20) {
+        showToast(`Must have at least 20 ${getUXTerm("token-symbol-dmcs")} in balance to pay dispute fee`, true);
+        return;
+      }
+
+      actorInfo.balanceDMCS -= 20;
+      activeJob.status = "Disputed";
+
+      db.disputes.push({
+        jobId: activeJob.id,
+        contractorName: activeJob.contractorName,
+        milestoneIndex: activeIdx,
+        milestoneAmount: activeJob.milestones[activeIdx].amount,
+        description: activeJob.milestones[activeIdx].description,
+        homeownerVotes: 0,
+        contractorVotes: 0,
+        votedUsers: [],
+        resolved: false
+      });
+
+      saveDB();
+      showToast(`Dispute raised on Job #${activeJob.id}. Dedicated 20 ${getUXTerm("token-symbol-dmcs")} review fee.`);
+      renderAll();
+    });
+  }
+}
+
+function renderSchedules() {
+  const list = document.getElementById("schedulesList");
+  if (!list) return;
+
+  list.innerHTML = "";
+  
+  db.schedules = db.schedules || [];
+
+  if (db.schedules.length === 0) {
+    list.innerHTML = `<div class="text-muted" style="text-align: center; padding: 1rem 0; font-size: 0.85rem;">No planned maintenance checks. Schedule one above.</div>`;
+    return;
+  }
+
+  db.schedules.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "checklist-card";
+    card.innerHTML = `
+      <div class="checklist-details">
+        <span class="checklist-title">${item.category}</span>
+        <span class="checklist-date">📅 Target: ${item.date}</span>
+      </div>
+      <button class="select-pro-btn run-match-btn" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-color: var(--accent-purple);">
+        🔍 Run Match
+      </button>
+    `;
+
+    card.querySelector(".run-match-btn").addEventListener("click", () => {
+      const categorySelect = document.getElementById("searchCategory");
+      if (item.category.toLowerCase().includes("roof")) {
+        categorySelect.value = "Roofing";
+      } else if (item.category.toLowerCase().includes("clean")) {
+        categorySelect.value = "Housekeeping";
+      } else if (item.category.toLowerCase().includes("tutor")) {
+        categorySelect.value = "Tutoring";
+      }
+      
+      document.getElementById("searchQuery").value = `Looking for service for scheduled: ${item.category}`;
+      document.getElementById("btnShowMatch").click();
+      document.getElementById("matchBtn").click();
+      
+      showToast(`Running AI match search for scheduled "${item.category}"...`);
+    });
+
+    list.appendChild(card);
+  });
+}
+
+function renderRepairHistory() {
+  const list = document.getElementById("repairHistoryList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  const completedJobs = db.jobs.filter(j => j.status === "Completed" || j.status === "Resolved");
+
+  if (completedJobs.length === 0) {
+    list.innerHTML = `<div class="text-muted" style="text-align: center; padding: 1.5rem 0; font-size: 0.85rem;">No verified repairs recorded yet. Complete a project to generate a profile.</div>`;
+    return;
+  }
+
+  completedJobs.forEach(job => {
+    const card = document.createElement("div");
+    card.className = "history-card";
+    
+    let displayCost = "";
+    if (uxMode === 'traditional') {
+      displayCost = `$${job.totalAmount.toLocaleString()} USD`;
+    } else {
+      displayCost = `${job.totalAmount} ${getUXTerm("token-symbol-dmcs")}`;
+    }
+
+    const certHash = `0x${CryptoJS_mock_sha256(job.id + job.contractorName).slice(0, 16)}`;
+
+    card.innerHTML = `
+      <div class="history-header">
+        <span class="history-title">${job.contractorName}</span>
+        <span class="history-badge verified">✓ Verified Log</span>
+      </div>
+      <div class="history-body">
+        <div>Completed all agreement milestones successfully. Scope included: ${job.milestones.map(m => m.description.split(': ')[1] || m.description).join('; ')}.</div>
+      </div>
+      <div class="history-footer">
+        <span>Cost: ${displayCost}</span>
+        <span>Cert Hash: <code style="color: var(--accent-cyan); font-family: monospace;">${certHash}</code></span>
+      </div>
+    `;
+
+    list.appendChild(card);
+  });
+}
+
+function renderGovernanceDisputes() {
+  const list = document.getElementById("governanceDisputesList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  const activeDisputes = db.disputes.filter(d => !d.resolved);
+
+  if (activeDisputes.length === 0) {
+    list.innerHTML = `<div class="text-muted" style="text-align: center; padding: 1rem 0; font-size: 0.85rem;">No dispute review opportunities active.</div>`;
+    return;
+  }
+
+  activeDisputes.forEach(d => {
+    const card = document.createElement("div");
+    card.className = "factual-pro-card";
+    card.style.padding = "0.75rem";
+    card.style.marginBottom = "0.5rem";
+    card.style.fontSize = "0.8rem";
+
+    let userHasVoted = false;
+    if (currentActor) {
+      userHasVoted = d.votedUsers.includes(WALLETS[currentActor].address);
+    }
+
+    let votingButtons = "";
+    if (!userHasVoted) {
+      votingButtons = `
+        <div style="display: flex; gap: 0.4rem; justify-content: flex-end; margin-top: 0.4rem;">
+          <button class="select-pro-btn vote-contractor-btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; border-color: var(--accent-purple);">
+            ${getUXTerm("vote-contractor-btn")}
+          </button>
+          <button class="select-pro-btn vote-homeowner-btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; border-color: var(--accent-cyan);">
+            ${getUXTerm("vote-homeowner-btn")}
+          </button>
+        </div>
+      `;
+    } else {
+      votingButtons = `<div style="font-size: 0.75rem; font-style: italic; color: var(--accent-mint); text-align: right; margin-top: 0.4rem;">✓ Voted</div>`;
+    }
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 0.25rem;">
+        <span>Dispute on Job #${d.jobId}</span>
+        <span style="color: var(--accent-cyan);">Votes: H:${d.homeownerVotes} C:${d.contractorVotes}</span>
+      </div>
+      <div style="color: var(--text-secondary); line-height: 1.3; font-size: 0.75rem; margin-bottom: 0.25rem;">
+        <strong>Issue:</strong> ${d.description}
+      </div>
+      ${votingButtons}
+    `;
+
+    const voteH = card.querySelector(".vote-homeowner-btn");
+    const voteC = card.querySelector(".vote-contractor-btn");
+
+    if (voteH) {
+      voteH.addEventListener("click", () => {
+        castVote(d, true);
+      });
+    }
+    if (voteC) {
+      voteC.addEventListener("click", () => {
+        castVote(d, false);
+      });
+    }
+
+    list.appendChild(card);
+  });
+}
+
+function CryptoJS_mock_sha256(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16).padStart(16, '0');
 }
 
 function renderWalletStatus() {

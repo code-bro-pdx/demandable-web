@@ -643,3 +643,242 @@ body {
   display: none !important;
 }
 
+/* Customer Portal Dashboard Layout */
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.widget-account {
+  grid-column: 1 / 2;
+}
+
+.widget-pipeline {
+  grid-column: 2 / 3;
+}
+
+.widget-planner {
+  grid-column: 1 / 2;
+  grid-row: span 2;
+}
+
+.widget-history {
+  grid-column: 2 / 3;
+}
+
+.widget-governance {
+  grid-column: 2 / 3;
+}
+
+@media (max-width: 900px) {
+  .portal-grid {
+    grid-template-columns: 1fr;
+  }
+  .widget-account, .widget-pipeline, .widget-planner, .widget-history, .widget-governance {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+/* Tab button styling inside Planner widget */
+.widget-planner button.select-pro-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: var(--transition-smooth);
+}
+
+.widget-planner button.select-pro-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.widget-planner button.select-pro-btn.active {
+  background: var(--accent-purple);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(142, 45, 226, 0.3);
+}
+
+/* Pipeline visual tracker progress steps */
+.pipeline-steps {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: 1.5rem 0;
+  padding: 0 0.5rem;
+}
+
+.pipeline-steps::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  z-index: 1;
+}
+
+.pipeline-progress-bar {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(to right, var(--accent-purple), var(--accent-cyan));
+  z-index: 2;
+  transition: width 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  width: 0%;
+}
+
+.pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 3;
+  width: 20%;
+}
+
+.step-node {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  border: 2px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: var(--transition-smooth);
+}
+
+.pipeline-step.active .step-node {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+  box-shadow: 0 0 10px rgba(142, 45, 226, 0.4);
+}
+
+.pipeline-step.completed .step-node {
+  background: var(--accent-mint);
+  border-color: var(--accent-mint);
+  color: #07090e;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+}
+
+.step-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pipeline-step.active .step-label {
+  color: var(--text-primary);
+}
+
+.pipeline-step.completed .step-label {
+  color: var(--accent-mint);
+}
+
+/* Home Repair History Card styling */
+.history-card {
+  background: rgba(255,255,255,0.015);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: var(--transition-smooth);
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 5px 15px rgba(0, 245, 255, 0.05);
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed rgba(255,255,255,0.05);
+  padding-bottom: 0.5rem;
+}
+
+.history-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.history-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.history-badge.verified {
+  background: rgba(0, 255, 204, 0.1);
+  color: var(--accent-mint);
+}
+
+.history-body {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.history-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Scheduled checklist task card */
+.checklist-card {
+  background: rgba(255,255,255,0.01);
+  border: 1px dashed var(--card-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: var(--transition-smooth);
+}
+
+.checklist-card:hover {
+  border-color: var(--accent-purple);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.checklist-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.checklist-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.checklist-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+

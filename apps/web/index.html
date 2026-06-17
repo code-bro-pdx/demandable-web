@@ -42,79 +42,163 @@
     <!-- Main Views -->
     <main>
       
-      <!-- Homeowner Portal View -->
+      <!-- Homeowner Portal View (Unified Customer Portal) -->
       <section id="tab-homeowner" class="tab-view active">
-        <div class="grid-layout">
+        <!-- Dashboard Grid Layout -->
+        <div class="portal-grid">
           
-          <!-- Column 1: AI Matcher & Search -->
-          <div class="glass-container">
+          <!-- Widget 1: My Secure Account -->
+          <div class="glass-container widget-account">
             <div class="card-header">
-              <span>Smart AI matching & Static Directory</span>
-              <span style="font-size: 0.8rem; color: var(--accent-cyan);">Strictly Factual Listings</span>
+              <span>💳 Secure Account Balance</span>
+              <span style="font-size: 0.75rem; background: rgba(0,255,204,0.1); color: var(--accent-mint); padding: 0.3rem 0.6rem; border-radius: 4px; font-weight: bold;">Protected</span>
             </div>
             <div class="card-body">
-              <div class="form-group">
-                <label>What service do you need? (AI Search Query)</label>
-                <textarea id="searchQuery" class="form-textarea" rows="3" placeholder="Describe the job details, issues, specifications, or tutoring subjects..."></textarea>
+              <div style="background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: 10px; border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Available Funds</div>
+                  <div style="font-size: 1.75rem; font-family: var(--font-heading); font-weight: 700; color: var(--accent-cyan);" id="portalUSD">$5,000.00</div>
+                </div>
+                <button class="select-pro-btn" id="depositFundsBtn">Add Funds</button>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="ux-advanced" style="font-size: 0.75rem; border-top: 1px dashed var(--card-border); padding-top: 0.5rem; display: flex; justify-content: space-between;">
+                <span style="color: var(--text-secondary);">Self-Custodial Address:</span>
+                <span style="font-family: monospace; color: var(--accent-purple);" id="portalWalletAddr">0x7a839Fde147A3e89DeCb01235477B79a785245d3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Widget 2: Active Service Pipeline -->
+          <div class="glass-container widget-pipeline">
+            <div class="card-header">
+              <span>⚡ Active Service Tracker</span>
+              <span id="pipelineStatusBadge" style="font-size: 0.75rem; background: rgba(255,255,255,0.05); padding: 0.3rem 0.6rem; border-radius: 4px; color: var(--text-secondary);">Idle</span>
+            </div>
+            <div class="card-body" id="pipelineContainer" style="padding: 1.25rem;">
+              <div class="text-muted" style="text-align: center; padding: 1.5rem 0; font-size: 0.85rem;">No active projects in progress. Search for services below to get started.</div>
+            </div>
+          </div>
+
+          <!-- Widget 3: Maintenance Planner & AI Search -->
+          <div class="glass-container widget-planner">
+            <div class="card-header">
+              <span>📅 Scheduled Maintenance & AI Search</span>
+            </div>
+            <div class="card-body">
+              <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; background: rgba(0,0,0,0.15); padding: 0.3rem; border-radius: 8px; border: 1px solid var(--card-border);">
+                <button class="select-pro-btn active" id="btnShowMatch" style="flex: 1; text-align: center; border: none; padding: 0.5rem; font-size: 0.85rem;">AI Search & Bid</button>
+                <button class="select-pro-btn" id="btnShowSchedule" style="flex: 1; text-align: center; border: none; padding: 0.5rem; font-size: 0.85rem;">Planned Checks</button>
+              </div>
+              
+              <!-- Sub-pane 3a: AI Search & Bid -->
+              <div id="paneMatch">
                 <div class="form-group">
-                  <label>Category</label>
-                  <select id="searchCategory" class="form-select">
-                    <option value="Roofing">Roofing</option>
-                    <option value="Housekeeping">Housekeeping</option>
-                    <option value="Tutoring">Tutoring</option>
+                  <label>What service or maintenance check do you need?</label>
+                  <textarea id="searchQuery" class="form-textarea" rows="2" placeholder="Describe the service (e.g., repair slate tiles, clean HVAC, tutor physics)..."></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>Category</label>
+                    <select id="searchCategory" class="form-select" style="padding: 0.6rem 0.75rem;">
+                      <option value="Roofing">Roofing</option>
+                      <option value="Housekeeping">Housekeeping</option>
+                      <option value="Tutoring">Tutoring</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>Radius (Miles)</label>
+                    <input type="number" id="searchRadius" class="form-input" value="25" style="padding: 0.6rem 0.75rem;">
+                  </div>
+                </div>
+                <button id="matchBtn" class="btn-primary" style="padding: 0.6rem;">
+                  <span>🔍</span> Find Vetted Providers
+                </button>
+
+                <div id="contractorListSection" style="margin-top: 1.5rem;">
+                  <h4 style="font-family: var(--font-heading); font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text-secondary);">Direct Factual Matches</h4>
+                  <div id="contractorsList" class="listing-wrapper">
+                    <div class="text-muted" style="font-size: 0.8rem; text-align: center; padding: 1rem 0;">No matches loaded. Run search above.</div>
+                  </div>
+                </div>
+
+                <div id="selectedContractorSection" style="display: none; border-top: 1px dashed var(--card-border); margin-top: 1.25rem; padding-top: 1.25rem;">
+                  <div class="form-group">
+                    <label>Contractor Bid Estimate Text</label>
+                    <textarea id="bidText" class="form-textarea" rows="3" placeholder="Paste contractor estimate here..."></textarea>
+                  </div>
+                  <button id="analyzeBidBtn" class="btn-primary" style="background: var(--accent-purple); padding: 0.6rem;">
+                    <span>⚙</span> Distill Bid into Agreement Milestones
+                  </button>
+
+                  <div id="parsedContractDetails" style="display: none; margin-top: 1.25rem;">
+                    <h4 style="font-family: var(--font-heading); font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text-secondary);">Factual Agreement Steps</h4>
+                    <div class="contract-breakdown" style="padding: 1rem;">
+                      <div id="milestonesContainer" style="display: flex; flex-direction: column; gap: 0.6rem;"></div>
+                      <div class="total-contract-cost" style="font-size: 0.95rem; margin-top: 0.75rem; padding-top: 0.75rem;">
+                        <span data-ux-term="total-cost-label">Total Cost:</span>
+                        <span id="totalEscrowCost">$0 DMCS</span>
+                      </div>
+                    </div>
+                    <button id="fundEscrowBtn" class="btn-primary" style="margin-top: 1rem; background: linear-gradient(135deg, var(--accent-mint), var(--accent-cyan)); color: #07090e; padding: 0.7rem;">
+                      <span>💳</span> <span data-ux-term="fund-btn-text">Approve & Fund Agreement</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sub-pane 3b: Schedule Maintenance -->
+              <div id="paneSchedule" style="display: none;">
+                <div class="form-group">
+                  <label>Select Planned Service Type</label>
+                  <select id="scheduleCategory" class="form-select">
+                    <option value="Slate Roof Inspection">Slate Roof Inspection</option>
+                    <option value="Quarterly Deep Clean">Quarterly Deep Clean</option>
+                    <option value="Weekly Chemistry Tutoring">Weekly Chemistry Tutoring</option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>Search Radius (Miles)</label>
-                  <input type="number" id="searchRadius" class="form-input" value="25">
+                  <label>Target Date</label>
+                  <input type="date" id="scheduleDate" class="form-input">
                 </div>
-              </div>
-              <button id="matchBtn" class="btn-primary">
-                <span>🔍</span> AI Match Contractors
-              </button>
-
-              <hr style="border: 1px solid var(--card-border); margin: 1.5rem 0;">
-
-              <div id="contractorListSection">
-                <h3 style="font-family: var(--font-heading); font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">Matching Providers (No Highlight/Ads Policy)</h3>
-                <div id="contractorsList" class="listing-wrapper">
-                  <div class="text-muted" style="text-align: center; font-size: 0.85rem; padding: 1rem 0;">Run AI Match to populate listings from the decentralized registry.</div>
+                <button id="confirmScheduleBtn" class="btn-primary" style="background: var(--accent-purple); padding: 0.6rem;">
+                  <span>🗓</span> Add to Maintenance Checklist
+                </button>
+                <div id="upcomingSchedules" style="margin-top: 1.5rem;">
+                  <h4 style="font-family: var(--font-heading); font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text-secondary);">Upcoming Scheduled Services</h4>
+                  <div id="schedulesList" class="listing-wrapper">
+                    <!-- Dynamic maintenance checks -->
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Column 2: Escrow Smart Contract & Milestones -->
-          <div class="glass-container">
+          <!-- Widget 4: Home Health & Repair History -->
+          <div class="glass-container widget-history">
             <div class="card-header">
-              <span data-ux-term="escrow-header">Smart Contract Escrow Generation</span>
-              <span id="selectedContractorBadge" style="font-size: 0.75rem; background: rgba(255,255,255,0.05); padding: 0.3rem 0.6rem; border-radius: 4px; display: none;">No contractor selected</span>
+              <span>🏡 Home Health Profile & Repair History</span>
             </div>
-            <div class="card-body" id="escrowCreationSection" style="opacity: 0.5; pointer-events: none;">
-              <div class="form-group">
-                <label>Submit Contractor Bid/Estimate (Text File or Unstructured Chat)</label>
-                <textarea id="bidText" class="form-textarea" rows="4" placeholder="Paste the contractor's raw estimate text here. The AI Agent will distill it into binding smart contract milestones..."></textarea>
+            <div class="card-body">
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.45;">
+                Factual timeline of verified projects, materials, and audits establishing your home's certified digital log.
+              </p>
+              <div id="repairHistoryList" class="listing-wrapper">
+                <div class="text-muted" style="text-align: center; padding: 1.5rem 0; font-size: 0.85rem;">No verified repairs recorded yet. Complete a project to generate a profile.</div>
               </div>
-              <button id="analyzeBidBtn" class="btn-primary" style="background: var(--accent-purple);">
-                <span>⚙</span> Deconstruct Estimate via AI
-              </button>
+            </div>
+          </div>
 
-              <div id="parsedContractDetails" style="display: none; margin-top: 1.5rem;">
-                <h3 style="font-family: var(--font-heading); font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">Factual Contract Milestones</h3>
-                <div class="contract-breakdown">
-                  <div id="milestonesContainer">
-                    <!-- Dynamic Milestones -->
-                  </div>
-                  <div class="total-contract-cost">
-                    <span data-ux-term="total-cost-label">Total Cost:</span>
-                    <span id="totalEscrowCost">$0 DMCS</span>
-                  </div>
-                </div>
-                <button id="fundEscrowBtn" class="btn-primary" style="margin-top: 1rem; background: linear-gradient(135deg, var(--accent-mint), var(--accent-cyan)); color: #07090e;">
-                  <span>💳</span> <span data-ux-term="fund-btn-text">Fund Escrow & Deploy Smart Contract</span>
-                </button>
+          <!-- Widget 5: Governance Reviews -->
+          <div class="glass-container widget-governance">
+            <div class="card-header">
+              <span>⚖️ Active Review Opportunities</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.45;">
+                Audit local standard benchmarks or resolve disagreements in the community review panel to build reputation.
+              </p>
+              <div id="governanceDisputesList" class="listing-wrapper">
+                <div class="text-muted" style="text-align: center; padding: 1rem 0; font-size: 0.85rem;">No dispute review opportunities active.</div>
               </div>
             </div>
           </div>
